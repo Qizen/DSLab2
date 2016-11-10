@@ -3,16 +3,21 @@ module Main where
 import Network.Socket
 import Data.List.Split
 import System.Exit
+import System.Environment
 
 main :: IO ()
 main = do
+    --read port number from command line
+    args <- getArgs
+    let port = args !! 0
+
     --create a TCP Socket
     sock <- socket AF_INET Stream 0
 
     setSocketOption sock ReuseAddr 1
 
-    --bind the socket to port 4242
-    bind sock (SockAddrInet 4242 iNADDR_ANY) 
+    --bind the socket to port 
+    bind sock (SockAddrInet (fromIntegral(read(port))) iNADDR_ANY) 
 
     --listen for at most 2 queued connections
     listen sock 2
