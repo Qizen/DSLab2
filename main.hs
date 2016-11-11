@@ -41,7 +41,7 @@ runConn (sock, sockAddr) = do
     case head split of
         "KILL_SERVICE" -> killCon sock
         "HELO" -> processHelo (sock, sockAddr, msg)
-        _ -> return()
+        _ -> return() --process other messages here
     
     runConn(sock, sockAddr)
 
