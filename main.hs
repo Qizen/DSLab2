@@ -4,6 +4,9 @@ import Network.Socket
 import Data.List.Split
 import System.Exit
 import System.Environment
+import Control.Concurrent
+
+type Msg = String
 
 main :: IO ()
 main = do
@@ -22,31 +25,44 @@ main = do
     --listen for at most 2 queued connections
     listen sock 2
 
-    mainLoop sock
+    --create a new FIFO channel for threads to communicate
+    chan <- newChan
 
-mainLoop :: Socket -> IO ()
-mainLoop sock = do
+    forkIO $ connDispatchLoop sock chan
+    
+    mainLoop sock chan
+
+mainLoop :: Socket -> Chan Msg -> IO ()
+mainLoop sock chan = do
+    message <- readChan chan
+    case message of 
+        "KILL" -> killCon sock
+        _ -> mainLoop sock chan
+
+connDispatchLoop :: Socket -> Chan Msg -> IO ()
+connDispatchLoop sock chan = do
     --accept a connection
     conn <- accept sock
 
-    runConn conn   
+    forkIO $ runConn conn chan   
 
     --recurse
-    --mainLoop sock
+    connDispatchLoop sock chan
 
-runConn :: (Socket, SockAddr) -> IO ()
-runConn (sock, sockAddr) = do
+runConn :: (Socket, SockAddr) -> Chan Msg -> IO ()
+runConn (sock, sockAddr) chan = do
     msg <- recv sock 1024
     let split = words msg
     case head split of
-        "KILL_SERVICE" -> killCon sock
+        "KILL_SERVICE" -> writeChan chan "KILL"
         "HELO" -> processHelo (sock, sockAddr, msg)
-        _ -> return() --process other messages here
+        _ -> return () --process other messages here
     
-    runConn(sock, sockAddr)
+    runConn (sock, sockAddr) chan
 
-killCon :: (Socket) -> IO ()
-killCon (sock) = do
+killCon :: Socket -> IO ()
+killCon sock = do
+    putStrLn "Killing the Service"
     close sock
     exitSuccess
 
