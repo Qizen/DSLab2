@@ -44,7 +44,7 @@ mainLoop sock chan = do
         "KILL" -> killConn sock
         _ -> mainLoop sock chan
 
--- conDispatchLoop handles dispatching jobs to the thread pool
+-- connDispatchLoop handles dispatching jobs to the thread pool
 connDispatchLoop :: Socket -> Chan Msg -> IO ()
 connDispatchLoop sock chan = do
     threadQueue <- atomically $ newTQueue
@@ -84,7 +84,7 @@ processHelo (sock, sockAddr, msg) = do
         if length split < 2 then return ()
         else do
             send sock $ "HELO " ++ split !! 1 ++ "\n\
-                \IP:" ++ ip ++ "\n\
+                \IP:" ++ sockAddr ++ "\n\
                 \Port:" ++ port ++ "\n\
                 \StudentID:12312907\n"
             return ()
