@@ -82,18 +82,16 @@ killConn sock = do
 processHelo :: (Socket, SockAddr, String) -> IO ()
 processHelo (sock, sockAddr, msg) = do
         ourSockAddr <- getSocketName sock
+        port <- socketPort sock
         (Just ourAddr, _) <- getNameInfo [NI_NUMERICHOST] True False ourSockAddr 
         if length split < 2 then return ()
         else do
             send sock $ "HELO " ++ split !! 1 ++ "\n\
                 \IP:" ++ ourAddr ++ "\n\
-                \Port:" ++ port ++ "\n\
+                \Port:" ++ (show port) ++ "\n\
                 \StudentID:12312907\n"
             return ()
     where split = words msg
-          addr = splitOn ":" (show sockAddr)
-          ip = addr !! 0
-          port = addr !! 1
 
 --creates a thread pool
 threadPoolIO :: Int -> (a -> IO ()) -> TQueue (a) -> IO ()
