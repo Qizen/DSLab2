@@ -81,7 +81,8 @@ killConn sock = do
 -- Process the HELO message
 processHelo :: (Socket, SockAddr, String) -> IO ()
 processHelo (sock, sockAddr, msg) = do
-        (Just ourAddr, _) <- getNameInfo [NI_NUMERICHOST] True False sockAddr 
+        ourSockAddr <- getSocketName sock
+        (Just ourAddr, _) <- getNameInfo [NI_NUMERICHOST] True False ourSockAddr 
         if length split < 2 then return ()
         else do
             send sock $ "HELO " ++ split !! 1 ++ "\n\
